@@ -1,5 +1,4 @@
-﻿using Mango.Services.Web.Models;
-using Mango.Web.Models;
+﻿using Mango.Web.Models;
 using Mango.Web.Service.IService;
 using Mango.Web.Utility;
 
@@ -18,7 +17,7 @@ namespace Mango.Web.Service
             {
                 ApiType = SD.ApiType.POST,
                 Data = productDto,
-                URL = SD.CouponAPIBase + "/api/product"
+                URL = SD.ProductAPIBase + "/api/product"
             });
         }
 
@@ -27,7 +26,7 @@ namespace Mango.Web.Service
             return await _baseService.SenAsync(new RequestDto()
             {
                 ApiType = SD.ApiType.DELETE,
-                URL = SD.CouponAPIBase + "/api/product/" + id
+                URL = SD.ProductAPIBase + "/api/product/" + id
             });
         }
 
@@ -36,7 +35,7 @@ namespace Mango.Web.Service
             return await _baseService.SenAsync(new RequestDto()
             {
                 ApiType = SD.ApiType.GET,
-                URL = SD.CouponAPIBase + "/api/product"
+                URL = SD.ProductAPIBase + "/api/product"
             });
         }
 
@@ -45,7 +44,7 @@ namespace Mango.Web.Service
             return await _baseService.SenAsync(new RequestDto()
             {
                 ApiType = SD.ApiType.GET,
-                URL = SD.CouponAPIBase + "/api/product/" + id
+                URL = SD.ProductAPIBase + "/api/product/" + id
             });
         }
 
@@ -55,7 +54,7 @@ namespace Mango.Web.Service
             {
                 ApiType = SD.ApiType.PUT,
                 Data = productDto,
-                URL = SD.CouponAPIBase + "/api/coupon"
+                URL = SD.ProductAPIBase + "/api/product"
             });
         }
     }

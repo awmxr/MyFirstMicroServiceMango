@@ -1,6 +1,6 @@
 ﻿using System.Reflection.Metadata.Ecma335;
 
-namespace Mango.Services.Web.Models
+namespace Mango.Web.Models
 {
     public class ResponseDto
     {
