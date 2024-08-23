@@ -2,6 +2,7 @@
 using Mango.Services.ShppingCartAPI.Data;
 using Mango.Services.ShppingCartAPI.Models;
 using Mango.Services.ShppingCartAPI.Models.Dto;
+using Mango.Services.ShppingCartAPI.Service.IService;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -16,11 +17,16 @@ namespace Mango.Services.ShppingCartAPI.Controllers
         private ResponseDto _response;
         private IMapper _mapper;
         private readonly AppDbContext _db;
-        public CartAPIController(AppDbContext db,IMapper mapper)
+        private IProductService _productService;
+        private ICouponService _couponService;
+        public CartAPIController(AppDbContext db,IMapper mapper, IProductService productService, ICouponService couponService)
         {
             _db = db;
             _response = new();
             _mapper = mapper;
+            _productService = productService;
+            _couponService = couponService;
+
         }
 
 
@@ -35,10 +41,22 @@ namespace Mango.Services.ShppingCartAPI.Controllers
                 };
                 cart.CartDetails = _mapper.Map<IEnumerable<CartDetailsDto>>(_db.CartDetails
                     .Where(c=> c.CartHeaderId == cart.CartHeader.CartHeaderId));
+                IEnumerable<ProductDto> productDtos = await _productService.GetProductsAsync();
 
                 foreach(var item in cart.CartDetails)
                 {
+                    item.Product = productDtos.FirstOrDefault(c=> c.ProductId == item.ProductId);
                     cart.CartHeader.CartTotal += (item.Count * item.Product.Price);
+                }
+                // apply coupon if any
+                if (!string.IsNullOrEmpty(cart.CartHeader.CouponCode))
+                {
+                    CouponDto coupon =  await _couponService.GetCouponAsync(cart.CartHeader.CouponCode);
+                    if(coupon != null && cart.CartHeader.CartTotal > coupon.MinAmount)
+                    {
+                        cart.CartHeader.CartTotal -= coupon.DiscountAmount;
+                        cart.CartHeader.Discount = coupon.DiscountAmount;
+                    }
                 }
                 _response.Result = cart;
             }
@@ -49,6 +67,44 @@ namespace Mango.Services.ShppingCartAPI.Controllers
             }
             return _response;
         }
+
+        [HttpPost("ApplyCoupon")]
+        public async Task<object> ApplyCoupon([FromBody]CartDto cartDto)
+        {
+            try
+            {
+                var cartFromDb = await _db.CartHeaders.FirstAsync(c => c.UserId == cartDto.CartHeader.UserId);
+                cartFromDb.CouponCode = cartDto.CartHeader.CouponCode;
+                _db.CartHeaders.Update(cartFromDb);
+                await _db.SaveChangesAsync();
+                _response.Result = true;
+            }
+            catch(Exception ex)
+            {
+                _response.IsSuccess = false;
+                _response.Message = ex.Message.ToString();
+            }
+            return _response;
+        }
+
+        //[HttpPost("RemoveCoupon")]
+        //public async Task<object> RemoveCoupon([FromBody] CartDto cartDto)
+        //{
+        //    try
+        //    {
+        //        var cartFromDb = await _db.CartHeaders.FirstAsync(c => c.UserId == cartDto.CartHeader.UserId);
+        //        cartFromDb.CouponCode = "";
+        //        _db.CartHeaders.Update(cartFromDb);
+        //        await _db.SaveChangesAsync();
+        //        _response.Result = true;
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        _response.IsSuccess = false;
+        //        _response.Message = ex.Message.ToString();
+        //    }
+        //    return _response;
+        //}
 
         [HttpPost("CartUpsert")]
         public async Task<ResponseDto> CartUpsert(CartDto cartDto)
