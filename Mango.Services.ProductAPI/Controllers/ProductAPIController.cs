@@ -23,7 +23,7 @@ namespace Mango.Services.ProductAPI.Controllers
 
         }
         [HttpGet]
-        [Authorize]
+        //[Authorize]
         public ResponseDto Get()
         {
             try
@@ -43,7 +43,7 @@ namespace Mango.Services.ProductAPI.Controllers
 
         [HttpGet]
         [Route("{id:int}")]
-        [Authorize]
+        //[Authorize]
         public ResponseDto Get(int id)
         {
             try
