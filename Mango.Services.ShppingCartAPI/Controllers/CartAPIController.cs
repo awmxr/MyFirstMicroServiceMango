@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using Mango.MessageBus;
 using Mango.Services.ShppingCartAPI.Data;
 using Mango.Services.ShppingCartAPI.Models;
 using Mango.Services.ShppingCartAPI.Models.Dto;
@@ -19,13 +20,17 @@ namespace Mango.Services.ShppingCartAPI.Controllers
         private readonly AppDbContext _db;
         private IProductService _productService;
         private ICouponService _couponService;
-        public CartAPIController(AppDbContext db,IMapper mapper, IProductService productService, ICouponService couponService)
+        private readonly IMessageBus _messageBus;
+        private IConfiguration _configuration;
+        public CartAPIController(AppDbContext db,IMapper mapper, IProductService productService, ICouponService couponService,IMessageBus messageBus,IConfiguration configuration)
         {
             _db = db;
             _response = new();
             _mapper = mapper;
             _productService = productService;
             _couponService = couponService;
+            _messageBus = messageBus;
+            _configuration = configuration;
 
         }
 
@@ -80,6 +85,22 @@ namespace Mango.Services.ShppingCartAPI.Controllers
                 _response.Result = true;
             }
             catch(Exception ex)
+            {
+                _response.IsSuccess = false;
+                _response.Message = ex.Message.ToString();
+            }
+            return _response;
+        }
+
+        [HttpPost("EmailCartRequest")]
+        public async Task<object> EmailCartRequest([FromBody] CartDto cartDto)
+        {
+            try
+            {
+                await _messageBus.PublishMessage(cartDto, _configuration.GetValue<string>("TopicAndQueueNames:EmailShoppingCart"));
+                _response.Result = true;
+            }
+            catch (Exception ex)
             {
                 _response.IsSuccess = false;
                 _response.Message = ex.Message.ToString();
